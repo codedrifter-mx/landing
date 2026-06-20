@@ -1,0 +1,48 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'talks'>;
+}
+
+const { entry } = Astro.props;
+const { title, venue, date, audience } = entry.data;
+---
+
+<article class="talk-item">
+  <div class="talk-header">
+    <span class="title">{title}</span>
+    <span class="date">{date}</span>
+  </div>
+  <p class="meta">{venue} &middot; {audience}</p>
+</article>
+
+<style>
+  .talk-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .talk-item:last-child {
+    border-bottom: none;
+  }
+  .talk-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .title {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+  .date {
+    color: var(--color-ink-dim);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  .meta {
+    color: var(--color-ink-dim);
+    font-size: 0.8rem;
+    margin: 0.25rem 0 0 0;
+  }
+</style>

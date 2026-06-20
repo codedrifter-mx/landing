@@ -1,0 +1,60 @@
+---
+---
+
+<figure class="diagram">
+  <svg viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram: 20+ apps route through Spring Cloud Gateway to Keycloak with 7 custom SPIs, backed by Kubernetes, ArgoCD, Redis, and Datadog">
+    <!-- 20+ Apps -->
+    <rect x="10" y="20" width="120" height="40" rx="6" fill="#11151f" stroke="#1c2230" stroke-width="1"/>
+    <text x="70" y="45" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#e6edf3">20+ Apps</text>
+
+    <!-- Arrow -->
+    <line x1="130" y1="40" x2="175" y2="40" stroke="#5bd1a0" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Spring Cloud Gateway -->
+    <rect x="180" y="20" width="140" height="40" rx="6" fill="#11151f" stroke="#5bd1a0" stroke-width="1"/>
+    <text x="250" y="38" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5bd1a0">Spring Cloud</text>
+    <text x="250" y="52" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#5bd1a0">Gateway (WebFlux)</text>
+
+    <!-- Arrow -->
+    <line x1="320" y1="40" x2="365" y2="40" stroke="#5bd1a0" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Keycloak -->
+    <rect x="370" y="20" width="100" height="40" rx="6" fill="#11151f" stroke="#5bd1a0" stroke-width="1"/>
+    <text x="420" y="45" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#e6edf3">Keycloak</text>
+
+    <!-- 7 SPIs -->
+    <rect x="370" y="80" width="100" height="100" rx="6" fill="#11151f" stroke="#1c2230" stroke-width="1"/>
+    <text x="420" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#7dd3fc">7+ Custom SPIs</text>
+    <text x="380" y="115" font-family="ui-monospace,monospace" font-size="8" fill="#8b98a9">Passkeys</text>
+    <text x="380" y="130" font-family="ui-monospace,monospace" font-size="8" fill="#8b98a9">WebAuthn</text>
+    <text x="380" y="145" font-family="ui-monospace,monospace" font-size="8" fill="#8b98a9">OTP</text>
+    <text x="380" y="160" font-family="ui-monospace,monospace" font-size="8" fill="#8b98a9">MFA flows</text>
+    <text x="380" y="175" font-family="ui-monospace,monospace" font-size="8" fill="#8b98a9">Claim mappers</text>
+
+    <!-- Line from Keycloak to SPIs -->
+    <line x1="420" y1="60" x2="420" y2="80" stroke="#1c2230" stroke-width="1"/>
+
+    <!-- Ops layer -->
+    <rect x="50" y="210" width="500" height="40" rx="6" fill="#11151f" stroke="#1c2230" stroke-width="1"/>
+    <text x="300" y="235" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#8b98a9">K8s / ArgoCD &middot; Redis &middot; Datadog &middot; 16 environments</text>
+
+    <!-- Arrow defs -->
+    <defs>
+      <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L0,6 L9,3 z" fill="#5bd1a0"/>
+      </marker>
+    </defs>
+  </svg>
+</figure>
+
+<style>
+  .diagram {
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+  .diagram svg {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+  }
+</style>

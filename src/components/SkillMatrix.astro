@@ -1,0 +1,38 @@
+---
+const skills = [
+  { label: 'languages', values: 'kotlin \u00b7 java \u00b7 rust \u00b7 python \u00b7 typescript \u00b7 sql' },
+  { label: 'backend',   values: 'spring boot \u00b7 express.js \u00b7 reactor / rxjava' },
+  { label: 'frontend',  values: 'react \u00b7 next.js \u00b7 tailwind' },
+  { label: 'cloud',     values: 'aws \u00b7 gcp \u00b7 k8s \u00b7 docker \u00b7 argocd \u00b7 terraform \u00b7 gh-actions' },
+  { label: 'auth',      values: 'keycloak \u00b7 oauth 2.1 \u00b7 oidc \u00b7 webauthn \u00b7 passkeys \u00b7 mfa' },
+  { label: 'ai',        values: 'copilotkit \u00b7 mcp servers \u00b7 llm integration \u00b7 prompt eng' },
+];
+---
+
+<div class="skill-matrix">
+  {skills.map((row) => (
+    <div class="skill-row">
+      <span class="skill-label">{row.label}</span>
+      <span class="skill-values">{row.values}</span>
+    </div>
+  ))}
+</div>
+
+<style>
+  .skill-matrix {
+    font-size: 0.85rem;
+    line-height: 1.8;
+  }
+  .skill-row {
+    display: flex;
+    gap: 1rem;
+  }
+  .skill-label {
+    color: var(--color-ink-dim);
+    min-width: 5rem;
+    flex-shrink: 0;
+  }
+  .skill-values {
+    color: var(--color-ink);
+  }
+</style>

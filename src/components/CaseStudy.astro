@@ -1,0 +1,97 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ArchitectureDiagram from './ArchitectureDiagram.astro';
+
+interface Props {
+  entry: CollectionEntry<'caseStudy'>;
+}
+
+const { entry } = Astro.props;
+const { title, context, approach, built, operations, outcome } = entry.data;
+---
+
+<section class="case-study">
+  <h3 class="title">{title}</h3>
+
+  <div class="field">
+    <span class="label">context</span>
+    <p class="value">{context}</p>
+  </div>
+
+  <div class="field">
+    <span class="label">approach</span>
+    <p class="value">{approach}</p>
+  </div>
+
+  <div class="field">
+    <span class="label">built</span>
+    <ul class="built-list">
+      {built.map((item) => <li>{item}</li>)}
+    </ul>
+  </div>
+
+  <ArchitectureDiagram />
+
+  <div class="field">
+    <span class="label">operations</span>
+    <p class="value">{operations}</p>
+  </div>
+
+  <div class="field">
+    <span class="label">outcome</span>
+    <p class="value outcome">{outcome}</p>
+  </div>
+</section>
+
+<style>
+  .case-study {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    margin: 0 0 1rem 0;
+    line-height: 1.4;
+  }
+  .field {
+    margin-bottom: 1rem;
+  }
+  .label {
+    display: block;
+    color: var(--color-accent);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.25rem;
+  }
+  .value {
+    color: var(--color-ink);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .outcome {
+    color: var(--color-accent);
+  }
+  .built-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .built-list li {
+    padding: 0.2rem 0 0.2rem 1rem;
+    position: relative;
+    color: var(--color-ink);
+    font-size: 0.85rem;
+  }
+  .built-list li::before {
+    content: '$';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+  }
+</style>
