@@ -60,3 +60,13 @@ a:hover {
   background: var(--color-accent);
   color: var(--color-bg);
 }
+
+section {
+  margin-top: 4rem;
+}
+
+@media (max-width: 640px) {
+  section {
+    margin-top: 2.5rem;
+  }
+}
