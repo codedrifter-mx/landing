@@ -1,17 +1,12 @@
 ---
-import '../styles/global.css';
+import Base from '../layouts/Base.astro';
+import SectionHeader from '../components/SectionHeader.astro';
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Alfredo Flores Garcia — Software Engineer</title>
-  </head>
-  <body>
-    <main>
-      <h1>alfredoflores.dev</h1>
-      <p>Scaffold working.</p>
-    </main>
-  </body>
-</html>
+<Base
+  title="Alfredo Flores Garcia — Software Engineer (IAM / Keycloak)"
+  description="Software Engineer with 5+ years architecting identity and auth systems at scale. Keycloak, OAuth 2.0, Kubernetes, AI-augmented development."
+>
+  <SectionHeader label="whoami" />
+  <p>Layout + SEO working. Content sections coming next.</p>
+</Base>
