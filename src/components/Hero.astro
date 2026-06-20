@@ -7,10 +7,10 @@
   <p class="tagline">Software Engineer &middot; IAM / Keycloak &middot; Dexcom</p>
   <p class="location">Durango, Mexico &mdash; Remote</p>
   <nav class="contact-links" aria-label="Contact links">
-    <a href="https://github.com/codedrifter-mx" rel="noopener noreferrer" target="_blank">github</a>
-    <span class="sep">/</span>
-    <a href="https://www.linkedin.com/in/alfredo-flores-mx" rel="noopener noreferrer" target="_blank">linkedin</a>
-    <span class="sep">/</span>
+    <a href="https://github.com/codedrifter-mx" rel="noopener noreferrer" target="_blank">github<span class="sr-only"> (opens in new tab)</span></a>
+    <span class="sep" aria-hidden="true">/</span>
+    <a href="https://www.linkedin.com/in/alfredo-flores-mx" rel="noopener noreferrer" target="_blank">linkedin<span class="sr-only"> (opens in new tab)</span></a>
+    <span class="sep" aria-hidden="true">/</span>
     <a href="mailto:alfredofloresgarcia156@gmail.com">email</a>
   </nav>
 </section>
@@ -57,5 +57,16 @@
   }
   .sep {
     color: var(--color-ink-dim);
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 </style>
