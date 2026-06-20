@@ -4,10 +4,13 @@ import Hero from '../components/Hero.astro';
 import SectionHeader from '../components/SectionHeader.astro';
 import ExperienceItem from '../components/ExperienceItem.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import CaseStudy from '../components/CaseStudy.astro';
+import { getEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
 
 const experience = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const caseStudyEntry = await getEntry('caseStudy', 'keycloak-iam-migration');
 ---
 
 <Base
@@ -24,5 +27,10 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
   <section class="mt-16">
     <SectionHeader label="projects" />
     {projects.map((entry) => <ProjectCard entry={entry} />)}
+  </section>
+
+  <section class="mt-16">
+    <SectionHeader label="case-study" />
+    {caseStudyEntry && <CaseStudy entry={caseStudyEntry} />}
   </section>
 </Base>
