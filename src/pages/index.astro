@@ -2,6 +2,10 @@
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import SectionHeader from '../components/SectionHeader.astro';
+import ExperienceItem from '../components/ExperienceItem.astro';
+import { getCollection } from 'astro:content';
+
+const experience = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <Base
@@ -9,6 +13,9 @@ import SectionHeader from '../components/SectionHeader.astro';
   description="Software Engineer with 5+ years architecting identity and auth systems at scale. Keycloak, OAuth 2.0, Kubernetes, AI-augmented development."
 >
   <Hero />
-  <SectionHeader label="experience" />
-  <p>Hero working. More sections coming.</p>
+
+  <section>
+    <SectionHeader label="experience" />
+    {experience.map((entry) => <ExperienceItem entry={entry} />)}
+  </section>
 </Base>
