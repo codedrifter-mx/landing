@@ -3,9 +3,11 @@ import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import SectionHeader from '../components/SectionHeader.astro';
 import ExperienceItem from '../components/ExperienceItem.astro';
+import ProjectCard from '../components/ProjectCard.astro';
 import { getCollection } from 'astro:content';
 
 const experience = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <Base
@@ -17,5 +19,10 @@ const experience = (await getCollection('experience')).sort((a, b) => a.data.ord
   <section>
     <SectionHeader label="experience" />
     {experience.map((entry) => <ExperienceItem entry={entry} />)}
+  </section>
+
+  <section class="mt-16">
+    <SectionHeader label="projects" />
+    {projects.map((entry) => <ProjectCard entry={entry} />)}
   </section>
 </Base>
