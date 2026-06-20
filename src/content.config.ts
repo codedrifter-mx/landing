@@ -1,4 +1,5 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
 
 const experience = defineCollection({
@@ -23,7 +24,7 @@ const projects = defineCollection({
     subtitle: z.string(),
     description: z.string(),
     tags: z.array(z.string()),
-    github: z.string().url(),
+    github: z.url(),
     role: z.string(),
     order: z.number(),
   }),
