@@ -1,0 +1,185 @@
+name: Security Audit
+
+on:
+  schedule:
+    - cron: '30 16 * * 6'
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      issues: write
+    env:
+      ZONE_ID: "7880a13d5f353f7ba42f5ec3626507af"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check 1 — RPi4 system packages
+        id: syspkgs
+        run: |
+          FINDINGS=""
+          UPDATES=$(pacman -Qu 2>/dev/null | wc -l)
+          if [ "$UPDATES" -gt 0 ]; then
+            FINDINGS="ℹ INFO: $UPDATES system packages pending update
+          $(pacman -Qu 2>/dev/null | head -20)
+          "
+            echo "has_findings=true" >> $GITHUB_OUTPUT
+          fi
+
+          CVE_OUTPUT=$(arch-audit 2>/dev/null | head -50)
+          if [ -n "$CVE_OUTPUT" ]; then
+            CVE_COUNT=$(echo "$CVE_OUTPUT" | wc -l)
+            FINDINGS="${FINDINGS}⚠ HIGH: $CVE_COUNT packages with known CVEs
+          $(echo "$CVE_OUTPUT" | head -20)
+          "
+            echo "has_findings=true" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -n "$FINDINGS" ]; then
+            echo "$FINDINGS" > /tmp/syspkgs-findings.txt
+          else
+            echo "has_findings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check 2 — Security headers regression
+        id: headers
+        run: |
+          HEADERS=$(curl -sI https://alfredoflores.dev 2>&1)
+          EXPECTED="strict-transport-security content-security-policy x-frame-options x-content-type-options referrer-policy permissions-policy"
+          MISSING=""
+          for h in $EXPECTED; do
+            if ! echo "$HEADERS" | grep -qi "$h"; then
+              MISSING="$MISSING  • missing: $h"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "has_findings=true" >> $GITHUB_OUTPUT
+            echo "⚠ HIGH: Security headers regressed:$MISSING" > /tmp/headers-findings.txt
+          else
+            echo "has_findings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check 3 — HTTPS redirect regression
+        id: https
+        run: |
+          RESPONSE=$(curl -sI http://alfredoflores.dev 2>&1)
+          STATUS=$(echo "$RESPONSE" | grep -oE "HTTP/[0-9.]+ [0-9]+" | head -1)
+          LOCATION=$(echo "$RESPONSE" | grep -i "location:" | head -1)
+          if ! echo "$STATUS" | grep -q "301" || ! echo "$LOCATION" | grep -qi "https"; then
+            echo "has_findings=true" >> $GITHUB_OUTPUT
+            echo "⚠ HIGH: Always Use HTTPS regressed — got $STATUS, Location: $LOCATION" > /tmp/https-findings.txt
+          else
+            echo "has_findings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check 4 — Cloudflare zone drift
+        id: cfzone
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          FINDINGS=""
+          SSL=$(curl -s "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/settings/ssl" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['value'])" 2>/dev/null)
+          if [ "$SSL" != "strict" ]; then
+            FINDINGS="⚠ HIGH: CF SSL mode drifted to '$SSL' (expected: strict)
+          "
+          fi
+
+          HTTPS_SETTING=$(curl -s "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/settings/always_use_https" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['value'])" 2>/dev/null)
+          if [ "$HTTPS_SETTING" != "on" ]; then
+            FINDINGS="${FINDINGS}⚠ HIGH: CF Always Use HTTPS drifted to '$HTTPS_SETTING' (expected: on)
+          "
+          fi
+
+          MIN_TLS=$(curl -s "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/settings/min_tls_version" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['value'])" 2>/dev/null)
+          if [ "$MIN_TLS" != "1.2" ]; then
+            FINDINGS="${FINDINGS}ℹ INFO: CF Min TLS version drifted to '$MIN_TLS' (expected: 1.2)
+          "
+          fi
+
+          if [ -n "$FINDINGS" ]; then
+            echo "has_findings=true" >> $GITHUB_OUTPUT
+            echo "$FINDINGS" > /tmp/cfzone-findings.txt
+          else
+            echo "has_findings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check 5 — Site liveness
+        id: liveness
+        run: |
+          STATUS=$(curl -sI https://alfredoflores.dev 2>&1 | grep -oE "HTTP/[0-9.]+ [0-9]+" | head -1)
+          if ! echo "$STATUS" | grep -q "200"; then
+            echo "has_findings=true" >> $GITHUB_OUTPUT
+            echo "🚨 CRITICAL: SITE DOWN — alfredoflores.dev returned $STATUS" > /tmp/liveness-findings.txt
+          else
+            echo "has_findings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Aggregate findings
+        id: aggregate
+        run: |
+          ALL_FINDINGS=""
+          for f in /tmp/syspkgs-findings.txt /tmp/headers-findings.txt /tmp/https-findings.txt /tmp/cfzone-findings.txt /tmp/liveness-findings.txt; do
+            if [ -f "$f" ]; then
+              ALL_FINDINGS="${ALL_FINDINGS}$(cat "$f")
+          "
+            fi
+          done
+          if [ -n "$ALL_FINDINGS" ]; then
+            echo "has_findings=true" >> $GITHUB_OUTPUT
+            echo "$ALL_FINDINGS" > /tmp/all-findings.txt
+          else
+            echo "has_findings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Close prior audit issue
+        if: always()
+        run: |
+          EXISTING=$(gh issue list --repo codedrifter-mx/landing --label "audit,security" \
+            --state open --search "in:title security-audit" --json number --jq '.[0].number' 2>/dev/null) || true
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --repo codedrifter-mx/landing \
+              --comment "Auto-closed: audit run on $(date -u +%F)" 2>/dev/null || true
+          fi
+
+      - name: Open issue + send Telegram alert
+        if: steps.aggregate.outputs.has_findings == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          FINDINGS=$(cat /tmp/all-findings.txt)
+
+          # Open GitHub Issue
+          ISSUE_URL=$(gh issue create --repo codedrifter-mx/landing \
+            --label "security,audit" \
+            --title "[audit] security-audit findings — $(date -u +%F)" \
+            --body "$FINDINGS")
+
+          # Send Telegram alert (cap at 4000 chars to stay under Telegram 4096 limit)
+          MESSAGE="🚨 alfredoflores.dev — security-audit
+
+          $FINDINGS
+
+          Issue: $ISSUE_URL"
+
+          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=$(echo "$MESSAGE" | head -c 4000)"
+
+      - name: Send Telegram clean notification
+        if: steps.aggregate.outputs.has_findings == 'false'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MESSAGE="✅ alfredoflores.dev — security-audit
+          All 5 checks passed: system packages, security headers, HTTPS redirect, CF zone, site liveness."
+
+          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=$MESSAGE"
