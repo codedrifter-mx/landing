@@ -1,5 +1,5 @@
 ---
-role: Big Data Engineer (Contract)
+role: Big Data Engineer
 company: Walmart
 via: AgileThought
 location: "Mexico City, Mexico (Remote)"
