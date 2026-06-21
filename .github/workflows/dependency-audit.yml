@@ -1,0 +1,105 @@
+name: Dependency Audit
+
+on:
+  schedule:
+    - cron: '0 16 * * 6'
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit (high+critical)
+        id: audit
+        run: |
+          OUTPUT=$(npm audit --audit-level=high 2>&1) || true
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -qE "high|critical"; then
+            echo "has_findings=true" >> $GITHUB_OUTPUT
+            echo "$OUTPUT" > /tmp/audit-output.txt
+          else
+            echo "has_findings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: npm outdated
+        id: outdated
+        run: |
+          OUTDATED=$(npm outdated 2>&1) || true
+          OUTDATED_COUNT=$(echo "$OUTDATED" | grep -c ":" || true)
+          if [ "$OUTDATED_COUNT" -gt 0 ]; then
+            echo "has_outdated=true" >> $GITHUB_OUTPUT
+            echo "outdated_count=$OUTDATED_COUNT" >> $GITHUB_OUTPUT
+            echo "$OUTDATED" > /tmp/outdated.txt
+          else
+            echo "has_outdated=false" >> $GITHUB_OUTPUT
+            echo "outdated_count=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Close prior audit issue
+        if: always()
+        run: |
+          EXISTING=$(gh issue list --repo codedrifter-mx/landing --label "audit,security" \
+            --state open --search "in:title dependency-audit" --json number --jq '.[0].number' 2>/dev/null) || true
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --repo codedrifter-mx/landing \
+              --comment "Auto-closed: audit run on $(date -u +%F)" 2>/dev/null || true
+          fi
+
+      - name: Open issue + send Telegram alert
+        if: steps.audit.outputs.has_findings == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          AUDIT_SUMMARY=$(cat /tmp/audit-output.txt | grep -oE "[0-9]+ (high|critical)" | head -5)
+          OUTDATED_INFO=""
+          if [ "${{ steps.outdated.outputs.has_outdated }}" = "true" ]; then
+            OUTDATED_COUNT="${{ steps.outdated.outputs.outdated_count }}"
+            OUTDATED_INFO="
+          $OUTDATED_COUNT packages outdated:
+          $(cat /tmp/outdated.txt | head -10)"
+          fi
+
+          # Open GitHub Issue
+          ISSUE_URL=$(gh issue create --repo codedrifter-mx/landing \
+            --label "security,audit" \
+            --title "[audit] dependency-audit findings — $(date -u +%F)" \
+            --body "$(cat /tmp/audit-output.txt)
+
+          ---
+          Outdated packages:
+          $(cat /tmp/outdated.txt 2>/dev/null || echo 'none')")
+
+          # Send Telegram alert
+          MESSAGE="🚨 alfredoflores.dev — dependency-audit
+
+          Vulnerabilities found:
+          $AUDIT_SUMMARY
+          $OUTDATED_INFO
+          Issue: $ISSUE_URL"
+
+          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=$MESSAGE"
+
+      - name: Send Telegram clean notification
+        if: steps.audit.outputs.has_findings == 'false'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          OUTDATED_COUNT="${{ steps.outdated.outputs.outdated_count }}"
+          MESSAGE="✅ alfredoflores.dev — dependency-audit
+          No high/critical vulnerabilities. $OUTDATED_COUNT packages outdated."
+
+          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=$MESSAGE"
