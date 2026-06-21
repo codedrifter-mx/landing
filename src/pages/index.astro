@@ -7,8 +7,7 @@ import ProjectCard from '../components/ProjectCard.astro';
 import CaseStudy from '../components/CaseStudy.astro';
 import SkillMatrix from '../components/SkillMatrix.astro';
 import TalkItem from '../components/TalkItem.astro';
-import Contact from '../components/Contact.astro';
-import Footer from '../components/Footer.astro';
+
 import { getCollection, getEntry } from 'astro:content';
 
 const experience = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
@@ -48,5 +47,4 @@ const caseStudyEntry = await getEntry('caseStudy', 'keycloak-iam-migration');
     {talks.map((entry) => <TalkItem entry={entry} />)}
   </section>
 
-  <Footer />
 </Base>
